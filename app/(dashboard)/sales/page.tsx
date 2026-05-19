@@ -8,7 +8,7 @@ export default async function SalesPage() {
     .from('leads')
     .select(`
       *,
-      assigned_agent:profiles(id, full_name),
+      assigned_agent:users(id, full_name),
       active_smart_plans:smart_plan_enrollments(id, status, smart_plan:smart_plans(name))
     `)
     .not('pipeline_stage', 'is', null)

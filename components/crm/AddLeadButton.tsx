@@ -37,7 +37,9 @@ export default function AddLeadButton({ agents }: AddLeadButtonProps) {
       assigned_agent_id: form.assigned_agent_id || null,
     })
 
-    if (!error) {
+    if (error) {
+      alert(`Failed to add lead: ${error.message}`)
+    } else {
       setOpen(false)
       setForm({ first_name: '', last_name: '', email: '', phone: '', address: '', city: '', state: '', zip: '', lead_type: 'Buyer', lead_source: '', status: 'New', assigned_agent_id: '', deal_value: '' })
       router.refresh()

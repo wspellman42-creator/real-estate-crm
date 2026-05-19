@@ -10,10 +10,10 @@ export default async function LeadPage({ params }: { params: Promise<{ id: strin
     .from('leads')
     .select(`
       *,
-      assigned_agent:profiles(id, full_name, email, role),
+      assigned_agent:users(id, full_name, email, role),
       tags:lead_tags(tag:tags(*)),
-      notes:lead_notes(*, author:profiles(full_name)),
-      tasks(*, assigned_to:profiles(full_name)),
+      notes:lead_notes(*, author:users(full_name)),
+      tasks(*, assigned_to:users(full_name)),
       active_smart_plans:smart_plan_enrollments(*, smart_plan:smart_plans(*))
     `)
     .eq('id', id)
@@ -26,12 +26,12 @@ export default async function LeadPage({ params }: { params: Promise<{ id: strin
     tags: lead.tags?.map((lt: { tag: unknown }) => lt.tag) ?? [],
   }
 
-  const { data: agents } = await supabase.from('profiles').select('id, full_name')
+  const { data: agents } = await supabase.from('users').select('id, full_name')
   const { data: smartPlans } = await supabase.from('smart_plans').select('id, name, category').eq('is_active', true)
   const { data: allTags } = await supabase.from('tags').select('*')
   const { data: activity } = await supabase
     .from('lead_activity')
-    .select('*, user:profiles(full_name)')
+    .select('*, user:users(full_name)')
     .eq('lead_id', id)
     .order('created_at', { ascending: false })
     .limit(20)

@@ -15,7 +15,7 @@ export default async function CRMPage({
     .from('leads')
     .select(`
       *,
-      assigned_agent:profiles(id, full_name, email),
+      assigned_agent:users(id, full_name, email),
       tags:lead_tags(tag:tags(*)),
       active_smart_plans:smart_plan_enrollments(
         id, status, smart_plan:smart_plans(id, name)
@@ -38,7 +38,7 @@ export default async function CRMPage({
     active_smart_plans: lead.active_smart_plans?.filter((e: { status: string }) => e.status === 'active') ?? [],
   })) ?? []
 
-  const { data: agents } = await supabase.from('profiles').select('id, full_name')
+  const { data: agents } = await supabase.from('users').select('id, full_name')
 
   return (
     <div className="space-y-5">
