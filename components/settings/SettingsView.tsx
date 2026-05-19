@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { Profile, Tag } from '@/lib/types'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
-import { User, Users, Tag as TagIcon, Plus, Trash2, UserPlus, Eye, EyeOff } from 'lucide-react'
+import { User, Users, Tag as TagIcon, Plus, Trash2, UserPlus, Eye, EyeOff, AlertTriangle } from 'lucide-react'
 
 interface Agent {
   id: string
@@ -35,6 +35,11 @@ export default function SettingsView({ profile, agents, tags, isAdmin }: Setting
   const [creating, setCreating] = useState(false)
   const [createError, setCreateError] = useState('')
   const [createSuccess, setCreateSuccess] = useState('')
+  const [deleteTarget, setDeleteTarget] = useState<Agent | null>(null)
+  const [deleteStep, setDeleteStep] = useState<1 | 2>(1)
+  const [deleteConfirmInput, setDeleteConfirmInput] = useState('')
+  const [deleting, setDeleting] = useState(false)
+  const [deleteError, setDeleteError] = useState('')
   const router = useRouter()
   const supabase = createClient()
 
@@ -81,6 +86,41 @@ export default function SettingsView({ profile, agents, tags, isAdmin }: Setting
       router.refresh()
     }
     setCreating(false)
+  }
+
+  function openDeleteModal(agent: Agent) {
+    setDeleteTarget(agent)
+    setDeleteStep(1)
+    setDeleteConfirmInput('')
+    setDeleteError('')
+  }
+
+  function closeDeleteModal() {
+    setDeleteTarget(null)
+    setDeleteStep(1)
+    setDeleteConfirmInput('')
+    setDeleteError('')
+  }
+
+  async function handleDelete() {
+    if (!deleteTarget) return
+    setDeleting(true)
+    setDeleteError('')
+
+    const res = await fetch('/api/admin/delete-user', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ user_id: deleteTarget.id }),
+    })
+    const data = await res.json()
+
+    if (!res.ok) {
+      setDeleteError(data.error ?? 'Failed to delete user')
+    } else {
+      closeDeleteModal()
+      router.refresh()
+    }
+    setDeleting(false)
   }
 
   const tabs = [
@@ -255,24 +295,36 @@ export default function SettingsView({ profile, agents, tags, isAdmin }: Setting
 
             {/* Team list */}
             <div className="space-y-2">
-              {agents.map(agent => (
-                <div key={agent.id} className="flex items-center gap-3 p-3 rounded-lg border border-gray-100 hover:bg-gray-50">
-                  <div className="w-9 h-9 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 text-sm font-semibold flex-shrink-0">
-                    {agent.full_name.split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2)}
+              {agents.map(agent => {
+                const isSelf = agent.id === profile?.id
+                return (
+                  <div key={agent.id} className="flex items-center gap-3 p-3 rounded-lg border border-gray-100 hover:bg-gray-50">
+                    <div className="w-9 h-9 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 text-sm font-semibold flex-shrink-0">
+                      {agent.full_name.split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2)}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-gray-900">{agent.full_name} {isSelf && <span className="text-xs text-gray-400">(you)</span>}</p>
+                      <p className="text-xs text-gray-500">{agent.email}</p>
+                    </div>
+                    <span className={`text-xs px-2 py-1 rounded-full font-medium capitalize ${
+                      agent.role === 'admin' ? 'bg-red-100 text-red-700' :
+                      agent.role === 'agent' ? 'bg-blue-100 text-blue-700' :
+                      'bg-gray-100 text-gray-600'
+                    }`}>
+                      {agent.role}
+                    </span>
+                    {isAdmin && !isSelf && (
+                      <button
+                        onClick={() => openDeleteModal(agent)}
+                        className="p-1.5 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                        title="Remove user"
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    )}
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-gray-900">{agent.full_name}</p>
-                    <p className="text-xs text-gray-500">{agent.email}</p>
-                  </div>
-                  <span className={`text-xs px-2 py-1 rounded-full font-medium capitalize ${
-                    agent.role === 'admin' ? 'bg-red-100 text-red-700' :
-                    agent.role === 'agent' ? 'bg-blue-100 text-blue-700' :
-                    'bg-gray-100 text-gray-600'
-                  }`}>
-                    {agent.role}
-                  </span>
-                </div>
-              ))}
+                )
+              })}
             </div>
 
             {!isAdmin && (
@@ -347,6 +399,75 @@ export default function SettingsView({ profile, agents, tags, isAdmin }: Setting
           </div>
         )}
       </div>
+      {/* Delete confirmation modal */}
+      {deleteTarget && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl w-full max-w-md shadow-2xl">
+            <div className="p-6">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center flex-shrink-0">
+                  <AlertTriangle size={18} className="text-red-600" />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-gray-900">Remove Team Member</h3>
+                  <p className="text-sm text-gray-500">This action cannot be undone</p>
+                </div>
+              </div>
+
+              {deleteStep === 1 ? (
+                <>
+                  <p className="text-sm text-gray-700 mb-1">You are about to permanently remove:</p>
+                  <div className="bg-gray-50 rounded-lg p-3 mb-4 border border-gray-200">
+                    <p className="font-medium text-gray-900">{deleteTarget.full_name}</p>
+                    <p className="text-sm text-gray-500">{deleteTarget.email}</p>
+                  </div>
+                  <p className="text-sm text-gray-600 mb-5">
+                    This will delete their login credentials and remove them from all lead assignments. Are you sure you want to continue?
+                  </p>
+                  <div className="flex gap-3">
+                    <button onClick={closeDeleteModal}
+                      className="flex-1 border border-gray-300 text-gray-700 py-2.5 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors">
+                      Cancel
+                    </button>
+                    <button onClick={() => setDeleteStep(2)}
+                      className="flex-1 bg-red-600 hover:bg-red-700 text-white py-2.5 rounded-lg text-sm font-medium transition-colors">
+                      Yes, Continue
+                    </button>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <p className="text-sm text-gray-700 mb-3">
+                    Type <span className="font-mono font-semibold text-gray-900">{deleteTarget.email}</span> to confirm deletion:
+                  </p>
+                  <input
+                    autoFocus
+                    value={deleteConfirmInput}
+                    onChange={e => setDeleteConfirmInput(e.target.value)}
+                    placeholder={deleteTarget.email}
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-500 mb-3"
+                  />
+                  {deleteError && (
+                    <p className="text-xs text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2 mb-3">{deleteError}</p>
+                  )}
+                  <div className="flex gap-3">
+                    <button onClick={closeDeleteModal}
+                      className="flex-1 border border-gray-300 text-gray-700 py-2.5 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors">
+                      Cancel
+                    </button>
+                    <button
+                      onClick={handleDelete}
+                      disabled={deleteConfirmInput !== deleteTarget.email || deleting}
+                      className="flex-1 bg-red-600 hover:bg-red-700 text-white py-2.5 rounded-lg text-sm font-medium transition-colors disabled:opacity-40 disabled:cursor-not-allowed">
+                      {deleting ? 'Deleting...' : 'Delete Permanently'}
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
