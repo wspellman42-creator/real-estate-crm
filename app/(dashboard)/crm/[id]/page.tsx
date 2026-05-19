@@ -13,7 +13,7 @@ export default async function LeadPage({ params }: { params: Promise<{ id: strin
       assigned_agent:users(id, full_name, email, role),
       tags:lead_tags(tag:tags(*)),
       notes:lead_notes(*, author:users(full_name)),
-      tasks(*, assigned_to:users(full_name)),
+      tasks(*, assigned_to:users!tasks_assigned_to_id_fkey(full_name)),
       active_smart_plans:smart_plan_enrollments(*, smart_plan:smart_plans(*))
     `)
     .eq('id', id)
