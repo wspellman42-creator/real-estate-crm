@@ -110,10 +110,13 @@ export default function LeadProfile({ lead, agents, smartPlans, allTags, activit
 
   async function enrollSmartPlan(planId: string) {
     const { data: { user } } = await supabase.auth.getUser()
-    await supabase.from('smart_plan_enrollments').upsert(
-      { smart_plan_id: planId, lead_id: lead.id, status: 'active', enrolled_by_id: user?.id },
-      { onConflict: 'smart_plan_id,lead_id' }
-    )
+    const { error } = await supabase.from('smart_plan_enrollments').insert({
+      smart_plan_id: planId,
+      lead_id: lead.id,
+      status: 'active',
+      enrolled_by_id: user?.id ?? null,
+    })
+    if (error) { alert(`Failed to assign plan: ${error.message}`); return }
     router.refresh()
   }
 
