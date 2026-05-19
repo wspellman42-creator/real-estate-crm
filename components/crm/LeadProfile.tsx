@@ -517,7 +517,7 @@ export default function LeadProfile({ lead, agents, smartPlans, allTags, activit
                     </div>
                     <div>
                       <label className={labelCls}>Pipeline Stage</label>
-                      <select value={editForm.pipeline_stage} onChange={e => field({ pipeline_stage: e.target.value })} className={inputCls}>
+                      <select value={editForm.pipeline_stage} onChange={e => field({ pipeline_stage: e.target.value as import('@/lib/types').PipelineStage })} className={inputCls}>
                         {PIPELINE_STAGES.map(s => <option key={s}>{s}</option>)}
                       </select>
                     </div>
