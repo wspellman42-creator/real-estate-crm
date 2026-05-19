@@ -12,7 +12,7 @@ import {
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
-const navItems = [
+const adminNavItems = [
   { href: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
   { href: '/crm', icon: Users, label: 'CRM' },
   { href: '/sales', icon: TrendingUp, label: 'Sales' },
@@ -20,8 +20,14 @@ const navItems = [
   { href: '/settings', icon: Settings, label: 'Settings' },
 ]
 
-export default function Sidebar() {
+const agentNavItems = [
+  { href: '/crm', icon: Users, label: 'CRM' },
+  { href: '/sales', icon: TrendingUp, label: 'Sales' },
+]
+
+export default function Sidebar({ role }: { role: string }) {
   const pathname = usePathname()
+  const navItems = role === 'admin' ? adminNavItems : agentNavItems
 
   return (
     <div className="w-56 flex-shrink-0 flex flex-col" style={{ backgroundColor: '#1a1f2e' }}>

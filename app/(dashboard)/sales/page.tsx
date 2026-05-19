@@ -4,7 +4,11 @@ import KanbanBoard from '@/components/sales/KanbanBoard'
 export default async function SalesPage() {
   const supabase = await createClient()
 
-  const { data: leads } = await supabase
+  const { data: { user } } = await supabase.auth.getUser()
+  const { data: currentUser } = await supabase.from('users').select('role').eq('id', user?.id ?? '').single()
+  const isAgent = currentUser?.role !== 'admin'
+
+  let query = supabase
     .from('leads')
     .select(`
       *,
@@ -13,6 +17,12 @@ export default async function SalesPage() {
     `)
     .not('pipeline_stage', 'is', null)
     .order('created_at', { ascending: false })
+
+  if (isAgent) {
+    query = query.eq('assigned_agent_id', user?.id ?? '')
+  }
+
+  const { data: leads } = await query
 
   const processedLeads = leads?.map(lead => ({
     ...lead,

@@ -11,6 +11,10 @@ export default async function CRMPage({
   const params = await searchParams
   const supabase = await createClient()
 
+  const { data: { user } } = await supabase.auth.getUser()
+  const { data: currentUser } = await supabase.from('users').select('role').eq('id', user?.id ?? '').single()
+  const isAgent = currentUser?.role !== 'admin'
+
   let query = supabase
     .from('leads')
     .select(`
@@ -23,6 +27,9 @@ export default async function CRMPage({
     `)
     .order('created_at', { ascending: false })
 
+  if (isAgent) {
+    query = query.eq('assigned_agent_id', user?.id ?? '')
+  }
   if (params.status) {
     query = query.eq('status', params.status)
   }

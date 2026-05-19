@@ -1,10 +1,15 @@
 import { createClient } from '@/lib/supabase/server'
+import { redirect } from 'next/navigation'
 import { Users, TrendingUp, CheckSquare, Zap, ArrowUpRight } from 'lucide-react'
 import Link from 'next/link'
 import { formatCurrency, getStatusColor, timeAgo } from '@/lib/utils'
 
 export default async function DashboardPage() {
   const supabase = await createClient()
+
+  const { data: { user } } = await supabase.auth.getUser()
+  const { data: currentUser } = await supabase.from('users').select('role').eq('id', user?.id ?? '').single()
+  if (currentUser?.role !== 'admin') redirect('/crm')
 
   const [
     { count: totalLeads },

@@ -1,8 +1,13 @@
 import { createClient } from '@/lib/supabase/server'
+import { redirect } from 'next/navigation'
 import SmartPlansView from '@/components/automations/SmartPlansView'
 
 export default async function AutomationsPage() {
   const supabase = await createClient()
+
+  const { data: { user } } = await supabase.auth.getUser()
+  const { data: currentUser } = await supabase.from('users').select('role').eq('id', user?.id ?? '').single()
+  if (currentUser?.role !== 'admin') redirect('/crm')
 
   const { data: smartPlans } = await supabase
     .from('smart_plans')

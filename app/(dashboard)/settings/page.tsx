@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
+import { redirect } from 'next/navigation'
 import SettingsView from '@/components/settings/SettingsView'
 
 export default async function SettingsPage() {
@@ -7,6 +8,7 @@ export default async function SettingsPage() {
   const { data: { user } } = await supabase.auth.getUser()
   const { data: profile } = await supabase.from('profiles').select('*').eq('id', user?.id ?? '').single()
   const { data: currentUser } = await supabase.from('users').select('role').eq('id', user?.id ?? '').single()
+  if (currentUser?.role !== 'admin') redirect('/crm')
   const { data: agents } = await supabase.from('users').select('*').order('full_name')
   const { data: tags } = await supabase.from('tags').select('*').order('name')
 

@@ -21,9 +21,11 @@ export default async function DashboardLayout({
     .eq('id', user.id)
     .single()
 
+  const role = profile?.role ?? 'agent'
+
   return (
     <div className="flex h-screen bg-gray-50 overflow-hidden">
-      <Sidebar />
+      <Sidebar role={role} />
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         <TopBar profile={profile} />
         <main className="flex-1 overflow-auto p-6">
