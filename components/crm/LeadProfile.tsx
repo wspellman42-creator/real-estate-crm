@@ -101,10 +101,14 @@ export default function LeadProfile({ lead, agents, smartPlans, allTags, activit
   }
 
   async function toggleTask(taskId: string, completed: boolean) {
+    const now = new Date().toISOString()
     await supabase.from('tasks').update({
       completed: !completed,
-      completed_at: !completed ? new Date().toISOString() : null
+      completed_at: !completed ? now : null
     }).eq('id', taskId)
+    if (!completed) {
+      await supabase.from('leads').update({ last_contacted_at: now }).eq('id', lead.id)
+    }
     router.refresh()
   }
 
