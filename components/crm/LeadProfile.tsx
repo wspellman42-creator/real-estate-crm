@@ -531,7 +531,7 @@ export default function LeadProfile({ lead, agents, smartPlans, allTags, activit
                     </div>
                     <div>
                       <label className={labelCls}>Pipeline Type</label>
-                      <select value={editForm.pipeline_type} onChange={e => field({ pipeline_type: e.target.value })} className={inputCls}>
+                      <select value={editForm.pipeline_type} onChange={e => field({ pipeline_type: e.target.value as 'company' | 'personal' })} className={inputCls}>
                         <option value="personal">Personal</option>
                         <option value="company">Company</option>
                       </select>
