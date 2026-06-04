@@ -7,7 +7,7 @@ export default async function AutomationsPage() {
 
   const { data: { user } } = await supabase.auth.getUser()
   const { data: currentUser } = await supabase.from('users').select('role').eq('id', user?.id ?? '').single()
-  if (currentUser?.role !== 'admin') redirect('/crm')
+  const isAdmin = currentUser?.role === 'admin'
 
   const { data: smartPlans } = await supabase
     .from('smart_plans')
@@ -30,7 +30,7 @@ export default async function AutomationsPage() {
         <h1 className="text-2xl font-bold text-gray-900">Automations</h1>
         <p className="text-gray-500 text-sm mt-0.5">Smart Plans &amp; automated workflows</p>
       </div>
-      <SmartPlansView smartPlans={processedPlans} />
+      <SmartPlansView smartPlans={processedPlans} isAdmin={isAdmin} currentUserId={user?.id ?? ''} />
     </div>
   )
 }

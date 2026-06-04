@@ -7,6 +7,7 @@ import { createClient } from '@/lib/supabase/client'
 
 interface SmartPlanBuilderProps {
   plan?: SmartPlan | null
+  isAdmin: boolean
   onClose: () => void
 }
 
@@ -40,7 +41,7 @@ interface BuilderStep {
   config: Record<string, unknown>
 }
 
-export default function SmartPlanBuilder({ plan, onClose }: SmartPlanBuilderProps) {
+export default function SmartPlanBuilder({ plan, isAdmin, onClose }: SmartPlanBuilderProps) {
   const supabase = createClient()
   const [saving, setSaving] = useState(false)
   const [showStepPicker, setShowStepPicker] = useState(false)
@@ -51,6 +52,7 @@ export default function SmartPlanBuilder({ plan, onClose }: SmartPlanBuilderProp
     category: plan?.category ?? '',
     trigger_type: plan?.trigger_type ?? 'manual',
     is_active: plan?.is_active ?? true,
+    visibility: (plan as (SmartPlan & { visibility?: string }) | null)?.visibility ?? 'personal',
   })
 
   const [steps, setSteps] = useState<BuilderStep[]>(
@@ -127,7 +129,13 @@ export default function SmartPlanBuilder({ plan, onClose }: SmartPlanBuilderProp
       }
     } else {
       // Create new plan
-      const { data: newPlan } = await supabase.from('smart_plans').insert({ ...form }).select().single()
+      const { data: { user } } = await supabase.auth.getUser()
+      const { data: profile } = await supabase.from('profiles').select('company_id').eq('id', user?.id ?? '').single()
+      const { data: newPlan } = await supabase.from('smart_plans').insert({
+        ...form,
+        company_id: profile?.company_id,
+        created_by_id: user?.id,
+      }).select().single()
       if (newPlan && steps.length > 0) {
         await supabase.from('smart_plan_steps').insert(
           steps.map((s, i) => ({
@@ -200,6 +208,29 @@ export default function SmartPlanBuilder({ plan, onClose }: SmartPlanBuilderProp
                 placeholder="e.g. Buyer, Seller, Nurture"
                 className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Visibility</label>
+              <div className="flex gap-2">
+                {(['personal', 'company'] as const).filter(v => v === 'personal' || isAdmin).map(v => (
+                  <button
+                    key={v}
+                    type="button"
+                    onClick={() => setForm(f => ({ ...f, visibility: v }))}
+                    className={`flex-1 py-2 rounded-lg text-sm font-medium border transition-colors ${
+                      form.visibility === v
+                        ? v === 'company' ? 'bg-blue-600 text-white border-blue-600' : 'bg-pink-500 text-white border-pink-500'
+                        : 'border-gray-300 text-gray-600 hover:bg-gray-50'
+                    }`}
+                  >
+                    {v === 'personal' ? 'Personal' : 'Company'}
+                  </button>
+                ))}
+              </div>
+              <p className="text-xs text-gray-400 mt-1">
+                {form.visibility === 'personal' ? 'Only you can see and use this plan' : 'Visible to all agents in your company'}
+              </p>
             </div>
 
             <div>

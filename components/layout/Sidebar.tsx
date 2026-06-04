@@ -48,6 +48,9 @@ const agentNavItems = [
   { section: 'Properties', items: [
     { href: '/listings', icon: Home, label: 'Listings' },
   ]},
+  { section: 'System', items: [
+    { href: '/automations', icon: Zap, label: 'Automations' },
+  ]},
 ]
 
 export default function Sidebar({ role }: { role: string }) {
