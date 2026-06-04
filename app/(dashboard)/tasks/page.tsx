@@ -5,6 +5,8 @@ import TasksView from '@/components/tasks/TasksView'
 export default async function TasksPage() {
   const supabase = await createClient()
 
+  const { data: { user } } = await supabase.auth.getUser()
+
   const [
     { data: tasks },
     { data: leads },
@@ -12,10 +14,12 @@ export default async function TasksPage() {
     supabase
       .from('tasks')
       .select('*, lead:leads(id, first_name, last_name)')
+      .eq('assigned_to_id', user?.id ?? '')
       .order('due_date', { ascending: true, nullsFirst: false }),
     supabase
       .from('leads')
       .select('id, first_name, last_name')
+      .eq('assigned_agent_id', user?.id ?? '')
       .order('last_name', { ascending: true }),
   ])
 

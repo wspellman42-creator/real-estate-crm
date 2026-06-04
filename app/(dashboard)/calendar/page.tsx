@@ -5,12 +5,19 @@ import CalendarView from '@/components/calendar/CalendarView'
 export default async function CalendarPage() {
   const supabase = await createClient()
 
+  const { data: { user } } = await supabase.auth.getUser()
+
   const [{ data: tasks }, { data: leads }] = await Promise.all([
     supabase
       .from('tasks')
       .select('*, lead:leads(id, first_name, last_name)')
+      .eq('assigned_to_id', user?.id ?? '')
       .order('due_date', { ascending: true }),
-    supabase.from('leads').select('id, first_name, last_name').order('last_name', { ascending: true }),
+    supabase
+      .from('leads')
+      .select('id, first_name, last_name')
+      .eq('assigned_agent_id', user?.id ?? '')
+      .order('last_name', { ascending: true }),
   ])
 
   return (

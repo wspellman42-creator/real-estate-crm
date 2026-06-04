@@ -13,6 +13,7 @@ import {
   Calendar,
   Home,
   BarChart2,
+  UserCircle,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -22,6 +23,7 @@ const adminNavItems = [
   ]},
   { section: 'CRM', items: [
     { href: '/crm', icon: Users, label: 'Leads' },
+    { href: '/my-leads', icon: UserCircle, label: 'My Leads' },
     { href: '/tasks', icon: CheckSquare, label: 'Tasks' },
     { href: '/calendar', icon: Calendar, label: 'Calendar' },
     { href: '/sales', icon: TrendingUp, label: 'Sales Pipeline' },

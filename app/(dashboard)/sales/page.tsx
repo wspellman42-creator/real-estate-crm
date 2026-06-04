@@ -5,10 +5,8 @@ export default async function SalesPage() {
   const supabase = await createClient()
 
   const { data: { user } } = await supabase.auth.getUser()
-  const { data: currentUser } = await supabase.from('users').select('role').eq('id', user?.id ?? '').single()
-  const isAgent = currentUser?.role !== 'admin'
 
-  let query = supabase
+  const query = supabase
     .from('leads')
     .select(`
       *,
@@ -16,11 +14,8 @@ export default async function SalesPage() {
       active_smart_plans:smart_plan_enrollments(id, status, smart_plan:smart_plans(name))
     `)
     .not('pipeline_stage', 'is', null)
+    .eq('assigned_agent_id', user?.id ?? '')
     .order('created_at', { ascending: false })
-
-  if (isAgent) {
-    query = query.eq('assigned_agent_id', user?.id ?? '')
-  }
 
   const { data: leads } = await query
 
