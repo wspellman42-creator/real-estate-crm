@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import LeadsTable from '@/components/crm/LeadsTable'
 import AddLeadButton from '@/components/crm/AddLeadButton'
 import ImportLeadsButton from '@/components/crm/ImportLeadsButton'
+import type { Lead } from '@/lib/types'
 
 const PAGE_SIZE = 50
 
@@ -66,7 +67,7 @@ export default async function CRMPage({
     ...lead,
     tags: (lead.tags as { tag: unknown }[] | null)?.map(lt => lt.tag) ?? [],
     active_smart_plans: (lead.active_smart_plans as { status: string }[] | null)?.filter(e => e.status === 'active') ?? [],
-  }))
+  })) as unknown as Lead[]
 
   const { data: agents } = await supabase.from('users').select('id, full_name')
 
