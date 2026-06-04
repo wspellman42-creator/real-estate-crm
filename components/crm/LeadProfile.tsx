@@ -11,6 +11,7 @@ import {
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
+import { useCompanyId } from '@/hooks/useCompanyId'
 
 interface LeadProfileProps {
   lead: Lead & {
@@ -64,6 +65,7 @@ export default function LeadProfile({ lead, agents, smartPlans, allTags, activit
   })
   const router = useRouter()
   const supabase = createClient()
+  const companyId = useCompanyId()
 
   function field(f: Partial<typeof editForm>) {
     setEditForm(prev => ({ ...prev, ...f }))
@@ -93,10 +95,10 @@ export default function LeadProfile({ lead, agents, smartPlans, allTags, activit
     if (!noteText.trim()) return
     setAddingNote(true)
     const { data: { user } } = await supabase.auth.getUser()
-    await supabase.from('lead_notes').insert({ lead_id: lead.id, content: noteText, author_id: user?.id, note_type: noteType })
+    await supabase.from('lead_notes').insert({ lead_id: lead.id, content: noteText, author_id: user?.id, note_type: noteType, company_id: companyId })
     await supabase.from('lead_activity').insert({
       lead_id: lead.id, user_id: user?.id,
-      activity_type: noteType, description: `Logged a ${NOTE_TYPE_LABELS[noteType].toLowerCase()}`
+      activity_type: noteType, description: `Logged a ${NOTE_TYPE_LABELS[noteType].toLowerCase()}`, company_id: companyId
     })
     setNoteText('')
     setAddingNote(false)
@@ -108,7 +110,7 @@ export default function LeadProfile({ lead, agents, smartPlans, allTags, activit
     const { data: { user } } = await supabase.auth.getUser()
     await supabase.from('tasks').insert({
       lead_id: lead.id, title: taskTitle,
-      due_date: taskDue || null, assigned_to_id: user?.id,
+      due_date: taskDue || null, assigned_to_id: user?.id, company_id: companyId,
     })
     setTaskTitle('')
     setTaskDue('')
@@ -134,6 +136,7 @@ export default function LeadProfile({ lead, agents, smartPlans, allTags, activit
       lead_id: lead.id,
       status: 'active',
       enrolled_by_id: user?.id ?? null,
+      company_id: companyId,
     })
     if (error) { alert(`Failed to assign plan: ${error.message}`); return }
     router.refresh()

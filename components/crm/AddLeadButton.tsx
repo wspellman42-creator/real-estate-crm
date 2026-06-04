@@ -5,6 +5,7 @@ import { Plus, X, Building2, User } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import { LEAD_TYPES, LEAD_STATUSES, LEAD_SOURCES } from '@/lib/utils'
+import { useCompanyId } from '@/hooks/useCompanyId'
 
 interface AddLeadButtonProps {
   agents: { id: string; full_name: string }[]
@@ -15,6 +16,7 @@ export default function AddLeadButton({ agents }: AddLeadButtonProps) {
   const [loading, setLoading] = useState(false)
   const router = useRouter()
   const supabase = createClient()
+  const companyId = useCompanyId()
 
   const [form, setForm] = useState({
     first_name: '', last_name: '', email: '', phone: '',
@@ -33,6 +35,7 @@ export default function AddLeadButton({ agents }: AddLeadButtonProps) {
 
     const { error } = await supabase.from('leads').insert({
       ...form,
+      company_id: companyId,
       deal_value: form.deal_value ? parseFloat(form.deal_value) : null,
       assigned_agent_id: form.assigned_agent_id || null,
     })

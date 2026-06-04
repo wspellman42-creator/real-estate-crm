@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { GlobalTask } from '@/lib/types'
 import { ChevronLeft, ChevronRight, Plus, Check, X } from 'lucide-react'
+import { useCompanyId } from '@/hooks/useCompanyId'
 
 interface Props {
   initialTasks: GlobalTask[]
@@ -29,6 +30,7 @@ export default function CalendarView({ initialTasks, leads }: Props) {
   const [newLeadId, setNewLeadId] = useState('')
   const [adding, setAdding] = useState(false)
   const supabase = createClient()
+  const companyId = useCompanyId()
 
   const fetchTasks = useCallback(async () => {
     const { data } = await supabase
@@ -108,6 +110,7 @@ export default function CalendarView({ initialTasks, leads }: Props) {
       due_date: dueDate.toISOString(),
       lead_id: newLeadId || null,
       assigned_to_id: user?.id,
+      company_id: companyId,
     })
     setNewTitle('')
     setNewTime('09:00')

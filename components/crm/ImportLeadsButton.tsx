@@ -5,6 +5,7 @@ import { Upload, X, CheckCircle2, AlertCircle } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import { LEAD_SOURCES } from '@/lib/utils'
+import { useCompanyId } from '@/hooks/useCompanyId'
 import type { LeadStatus, LeadType } from '@/lib/types'
 
 interface Props {
@@ -166,6 +167,7 @@ export default function ImportLeadsButton({ agents }: Props) {
   const fileRef = useRef<HTMLInputElement>(null)
   const router = useRouter()
   const supabase = createClient()
+  const companyId = useCompanyId()
 
   function reset() { setStep('upload'); setHeaders([]); setRows([]); setMapping({}); setResult(null); setProgress(0) }
 
@@ -201,6 +203,7 @@ export default function ImportLeadsButton({ agents }: Props) {
         status: 'New' as LeadStatus,
         lead_type: 'Buyer' as LeadType,
         pipeline_type: 'personal',
+        company_id: companyId,
       }
       const noteTexts: string[] = []
 
@@ -254,6 +257,7 @@ export default function ImportLeadsButton({ agents }: Props) {
             content,
             author_id: user?.id,
             note_type: 'note',
+            company_id: companyId,
           }))
         if (noteInserts.length) await supabase.from('lead_notes').insert(noteInserts)
       }
