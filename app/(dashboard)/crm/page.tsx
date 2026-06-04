@@ -44,7 +44,7 @@ export default async function CRMPage({
       id, first_name, last_name, email, phone,
       lead_type, lead_source, status, pipeline_type,
       assigned_agent_id, deal_value, last_contacted_at, created_at,
-      assigned_agent:users!leads_assigned_agent_id_fkey(id, full_name),
+      assigned_agent:users(id, full_name),
       tags:lead_tags(tag:tags(*)),
       active_smart_plans:smart_plan_enrollments(id, status, smart_plan:smart_plans(id, name))
     `, { count: 'exact' })
