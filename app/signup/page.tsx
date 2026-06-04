@@ -21,13 +21,18 @@ export default function SignupPage() {
     e.preventDefault()
     setError('')
     setLoading(true)
-    const { error } = await supabase.auth.signUp({
+    const { error: signUpError } = await supabase.auth.signUp({
       email,
       password,
       options: { data: { full_name: fullName, role: 'admin' } },
     })
+    if (signUpError && !signUpError.message.includes('already registered')) {
+      setError(signUpError.message); setLoading(false); return
+    }
+    // Sign in immediately (bypasses email confirmation requirement)
+    const { error: signInError } = await supabase.auth.signInWithPassword({ email, password })
     setLoading(false)
-    if (error) { setError(error.message); return }
+    if (signInError) { setError(signInError.message); return }
     setStep('company')
   }
 

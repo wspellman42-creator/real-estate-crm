@@ -35,7 +35,12 @@ export default function JoinPage() {
       password,
       options: { data: { full_name: fullName, role: 'agent' } },
     })
-    if (signupErr) { setError(signupErr.message); setLoading(false); return }
+    if (signupErr && !signupErr.message.includes('already registered')) {
+      setError(signupErr.message); setLoading(false); return
+    }
+    // Sign in immediately (bypasses email confirmation requirement)
+    const { error: signInErr } = await supabase.auth.signInWithPassword({ email, password })
+    if (signInErr) { setError(signInErr.message); setLoading(false); return }
 
     // Join company
     const res = await fetch('/api/companies/join', {
