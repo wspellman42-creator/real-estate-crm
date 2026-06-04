@@ -29,14 +29,14 @@ export async function POST(req: Request) {
       full_name: fullName?.trim() || user.email,
       role: 'admin',
       company_id: company.id,
-    }),
+    }, { onConflict: 'id' }),
     supabase.from('users').upsert({
       id: user.id,
       email: user.email,
       full_name: fullName?.trim() || user.email,
       role: 'admin',
       company_id: company.id,
-    }),
+    }, { onConflict: 'id' }),
   ])
 
   return NextResponse.json({ company })
