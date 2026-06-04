@@ -7,7 +7,7 @@ import { getStatusColor, getStageColor, LEAD_STATUSES, LEAD_TYPES, LEAD_SOURCES,
 import {
   ArrowLeft, Phone, Mail, MapPin, Edit2, CheckSquare,
   FileText, Zap, Tag as TagIcon, Clock, Plus, X, Check,
-  DollarSign, Calendar, User, Save, Building2, StickyNote
+  DollarSign, Calendar, User, Save, Building2, StickyNote, Trash2
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
@@ -30,6 +30,7 @@ export default function LeadProfile({ lead, agents, smartPlans, allTags, activit
   const [tab, setTab] = useState<Tab>('overview')
   const [editing, setEditing] = useState(false)
   const [saving, setSaving] = useState(false)
+  const [confirmDelete, setConfirmDelete] = useState(false)
   const [noteText, setNoteText] = useState('')
   const [noteType, setNoteType] = useState<NoteType>('note')
   const [addingNote, setAddingNote] = useState(false)
@@ -58,6 +59,11 @@ export default function LeadProfile({ lead, agents, smartPlans, allTags, activit
 
   function field(f: Partial<typeof editForm>) {
     setEditForm(prev => ({ ...prev, ...f }))
+  }
+
+  async function deleteLead() {
+    await supabase.from('leads').delete().eq('id', lead.id)
+    router.push('/crm')
   }
 
   async function saveEdit() {
@@ -190,7 +196,13 @@ export default function LeadProfile({ lead, agents, smartPlans, allTags, activit
           </div>
         </div>
         <div className="flex items-center gap-2 flex-shrink-0">
-          {editing ? (
+          {confirmDelete ? (
+            <>
+              <span className="text-xs text-gray-500">Delete this lead?</span>
+              <button onClick={deleteLead} className="px-3 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg text-sm font-medium transition-colors">Delete</button>
+              <button onClick={() => setConfirmDelete(false)} className="px-3 py-2 border border-gray-300 text-gray-700 rounded-lg text-sm hover:bg-gray-50 transition-colors">Cancel</button>
+            </>
+          ) : editing ? (
             <>
               <button onClick={() => setEditing(false)}
                 className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg text-sm hover:bg-gray-50 transition-colors">
@@ -203,11 +215,17 @@ export default function LeadProfile({ lead, agents, smartPlans, allTags, activit
               </button>
             </>
           ) : (
-            <button onClick={() => { setEditing(true); setTab('overview') }}
-              className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition-colors">
-              <Edit2 size={14} />
-              Edit Lead
-            </button>
+            <>
+              <button onClick={() => setConfirmDelete(true)}
+                className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors">
+                <Trash2 size={16} />
+              </button>
+              <button onClick={() => { setEditing(true); setTab('overview') }}
+                className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition-colors">
+                <Edit2 size={14} />
+                Edit Lead
+              </button>
+            </>
           )}
         </div>
       </div>

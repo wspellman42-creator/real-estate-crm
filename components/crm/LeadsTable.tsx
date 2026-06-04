@@ -4,7 +4,7 @@ import { useState, useMemo } from 'react'
 import Link from 'next/link'
 import { Lead } from '@/lib/types'
 import { getStatusColor, LEAD_STATUSES, LEAD_TYPES, LEAD_SOURCES, timeAgo, formatDate } from '@/lib/utils'
-import { Search, Trash2, ChevronUp, ChevronDown, ChevronsUpDown } from 'lucide-react'
+import { Search, Trash2, ChevronUp, ChevronDown, ChevronsUpDown, AlertTriangle, X } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 
@@ -32,6 +32,7 @@ export default function LeadsTable({ leads, agents }: LeadsTableProps) {
   const [pipelineFilter, setPipelineFilter] = useState('')
   const [sortKey, setSortKey] = useState<SortKey>('created_at')
   const [sortDir, setSortDir] = useState<SortDir>('desc')
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null)
   const router = useRouter()
   const supabase = createClient()
 
@@ -80,8 +81,8 @@ export default function LeadsTable({ leads, agents }: LeadsTableProps) {
   }, [leads, search, statusFilter, typeFilter, agentFilter, sourceFilter, pipelineFilter, sortKey, sortDir])
 
   async function deleteLead(id: string) {
-    if (!confirm('Delete this lead?')) return
     await supabase.from('leads').delete().eq('id', id)
+    setConfirmDeleteId(null)
     router.refresh()
   }
 
@@ -220,12 +221,19 @@ export default function LeadsTable({ leads, agents }: LeadsTableProps) {
                   <span className="text-sm text-gray-500">{timeAgo(lead.last_contacted_at)}</span>
                 </td>
                 <td className="px-4 py-3.5">
-                  <button
-                    onClick={() => deleteLead(lead.id)}
-                    className="opacity-0 group-hover:opacity-100 p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded transition-all"
-                  >
-                    <Trash2 size={14} />
-                  </button>
+                  {confirmDeleteId === lead.id ? (
+                    <div className="flex items-center gap-1">
+                      <button onClick={() => deleteLead(lead.id)} className="px-2 py-1 text-xs bg-red-500 text-white rounded hover:bg-red-600 font-medium">Delete</button>
+                      <button onClick={() => setConfirmDeleteId(null)} className="p-1 text-gray-400 hover:text-gray-600"><X size={13} /></button>
+                    </div>
+                  ) : (
+                    <button
+                      onClick={() => setConfirmDeleteId(lead.id)}
+                      className="opacity-0 group-hover:opacity-100 p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded transition-all"
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  )}
                 </td>
               </tr>
             ))}
