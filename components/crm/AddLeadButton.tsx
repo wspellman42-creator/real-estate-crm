@@ -31,6 +31,7 @@ export default function AddLeadButton({ agents }: AddLeadButtonProps) {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
+    if (!companyId) { alert('Company not loaded yet, please try again.'); return }
     setLoading(true)
 
     const { error } = await supabase.from('leads').insert({
@@ -209,7 +210,7 @@ export default function AddLeadButton({ agents }: AddLeadButtonProps) {
                   className="flex-1 border border-gray-300 text-gray-700 py-2.5 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors">
                   Cancel
                 </button>
-                <button type="submit" disabled={loading}
+                <button type="submit" disabled={loading || !companyId}
                   className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2.5 rounded-lg text-sm font-medium transition-colors disabled:opacity-60">
                   {loading ? 'Adding...' : 'Add Lead'}
                 </button>
