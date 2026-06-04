@@ -17,7 +17,7 @@ type FieldKey =
   | 'buying_address' | 'buying_city' | 'buying_state' | 'buying_zip'
   | 'selling_address' | 'selling_city' | 'selling_state' | 'selling_zip'
   | 'status' | 'lead_type' | 'lead_source' | 'pipeline_type'
-  | 'assigned_agent_id' | 'deal_value' | 'note' | 'skip'
+  | 'assigned_agent_id' | 'deal_value' | 'reg_date' | 'note' | 'skip'
 
 const FIELD_OPTIONS: { value: FieldKey; label: string }[] = [
   { value: 'first_name', label: 'First Name' },
@@ -42,6 +42,7 @@ const FIELD_OPTIONS: { value: FieldKey; label: string }[] = [
   { value: 'pipeline_type', label: 'Pipeline Type' },
   { value: 'assigned_agent_id', label: 'Agent' },
   { value: 'deal_value', label: 'Deal Value' },
+  { value: 'reg_date', label: 'Added Date (Reg Date)' },
   { value: 'note', label: 'Note (import as note)' },
   { value: 'skip', label: '— Skip —' },
 ]
@@ -75,6 +76,7 @@ function autoMap(header: string): FieldKey {
   if (h.includes('sellingproperty') && (h.includes('province') || h.includes('state'))) return 'selling_state'
   if (h.includes('sellingproperty') && (h.includes('postal') || h.includes('zip'))) return 'selling_zip'
   // Notes
+  if (h === 'regdate' || h === 'registrationdate' || h === 'addeddate' || h === 'createddate') return 'reg_date'
   if (/^note\d*$/.test(h)) return 'note'
   // Generic fallbacks
   if (h.includes('email')) return 'email'
@@ -207,6 +209,11 @@ export default function ImportLeadsButton({ agents }: Props) {
         if (!val) return
         if (field === 'skip') return
         if (field === 'note') { noteTexts.push(val); return }
+        if (field === 'reg_date') {
+          const parsed = new Date(val)
+          if (!isNaN(parsed.getTime())) rec.created_at = parsed.toISOString()
+          return
+        }
         if (field === 'status') rec.status = normalizeStatus(val)
         else if (field === 'lead_type') rec.lead_type = normalizeLeadType(val)
         else if (field === 'lead_source') rec.lead_source = normalizeSource(val)
