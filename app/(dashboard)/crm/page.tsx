@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import LeadsTable from '@/components/crm/LeadsTable'
 import AddLeadButton from '@/components/crm/AddLeadButton'
+import ImportLeadsButton from '@/components/crm/ImportLeadsButton'
 import { Search } from 'lucide-react'
 
 export default async function CRMPage({
@@ -54,7 +55,10 @@ export default async function CRMPage({
           <h1 className="text-2xl font-bold text-gray-900">CRM</h1>
           <p className="text-gray-500 text-sm mt-0.5">{processedLeads.length} leads total</p>
         </div>
-        <AddLeadButton agents={agents ?? []} />
+        <div className="flex items-center gap-2">
+          <ImportLeadsButton agents={agents ?? []} />
+          <AddLeadButton agents={agents ?? []} />
+        </div>
       </div>
 
       <LeadsTable leads={processedLeads} agents={agents ?? []} />
