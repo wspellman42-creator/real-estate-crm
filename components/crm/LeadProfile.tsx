@@ -50,6 +50,14 @@ export default function LeadProfile({ lead, agents, smartPlans, allTags, activit
     status: lead.status,
     pipeline_stage: lead.pipeline_stage ?? 'New Lead',
     pipeline_type: lead.pipeline_type ?? 'personal',
+    buying_address: lead.buying_address ?? '',
+    buying_city: lead.buying_city ?? '',
+    buying_state: lead.buying_state ?? '',
+    buying_zip: lead.buying_zip ?? '',
+    selling_address: lead.selling_address ?? '',
+    selling_city: lead.selling_city ?? '',
+    selling_state: lead.selling_state ?? '',
+    selling_zip: lead.selling_zip ?? '',
     assigned_agent_id: lead.assigned_agent_id ?? '',
     deal_value: lead.deal_value?.toString() ?? '',
     expected_close_date: lead.expected_close_date ?? '',
@@ -285,9 +293,32 @@ export default function LeadProfile({ lead, agents, smartPlans, allTags, activit
                   <div className="w-7 h-7 bg-orange-50 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5">
                     <MapPin size={13} className="text-orange-500" />
                   </div>
-                  <span className="leading-relaxed">
-                    {[lead.address, lead.city, lead.state, lead.zip].filter(Boolean).join(', ')}
-                  </span>
+                  <div className="leading-relaxed">
+                    <p className="text-xs text-gray-400 font-medium">Current</p>
+                    <span>{[lead.address, lead.city, lead.state, lead.zip].filter(Boolean).join(', ')}</span>
+                  </div>
+                </div>
+              )}
+              {(lead.buying_address || lead.buying_city) && (
+                <div className="flex items-start gap-2.5 text-sm text-gray-600">
+                  <div className="w-7 h-7 bg-blue-50 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <MapPin size={13} className="text-blue-500" />
+                  </div>
+                  <div className="leading-relaxed">
+                    <p className="text-xs text-gray-400 font-medium">Buying</p>
+                    <span>{[lead.buying_address, lead.buying_city, lead.buying_state, lead.buying_zip].filter(Boolean).join(', ')}</span>
+                  </div>
+                </div>
+              )}
+              {(lead.selling_address || lead.selling_city) && (
+                <div className="flex items-start gap-2.5 text-sm text-gray-600">
+                  <div className="w-7 h-7 bg-green-50 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <MapPin size={13} className="text-green-500" />
+                  </div>
+                  <div className="leading-relaxed">
+                    <p className="text-xs text-gray-400 font-medium">Selling</p>
+                    <span>{[lead.selling_address, lead.selling_city, lead.selling_state, lead.selling_zip].filter(Boolean).join(', ')}</span>
+                  </div>
                 </div>
               )}
             </div>
@@ -496,7 +527,7 @@ export default function LeadProfile({ lead, agents, smartPlans, allTags, activit
                 </div>
 
                 <div>
-                  <h3 className="text-sm font-semibold text-gray-900 mb-4">Address</h3>
+                  <h3 className="text-sm font-semibold text-gray-900 mb-4">Current Address</h3>
                   <div className="space-y-3">
                     <div>
                       <label className={labelCls}>Street Address</label>
@@ -514,6 +545,54 @@ export default function LeadProfile({ lead, agents, smartPlans, allTags, activit
                       <div>
                         <label className={labelCls}>Zip</label>
                         <input value={editForm.zip} onChange={e => field({ zip: e.target.value })} className={inputCls} />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <h3 className="text-sm font-semibold text-gray-900 mb-4">Buying Address</h3>
+                  <div className="space-y-3">
+                    <div>
+                      <label className={labelCls}>Street Address</label>
+                      <input value={editForm.buying_address} onChange={e => field({ buying_address: e.target.value })} className={inputCls} />
+                    </div>
+                    <div className="grid grid-cols-3 gap-3">
+                      <div className="col-span-1">
+                        <label className={labelCls}>City</label>
+                        <input value={editForm.buying_city} onChange={e => field({ buying_city: e.target.value })} className={inputCls} />
+                      </div>
+                      <div>
+                        <label className={labelCls}>State</label>
+                        <input value={editForm.buying_state} onChange={e => field({ buying_state: e.target.value })} className={inputCls} />
+                      </div>
+                      <div>
+                        <label className={labelCls}>Zip</label>
+                        <input value={editForm.buying_zip} onChange={e => field({ buying_zip: e.target.value })} className={inputCls} />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <h3 className="text-sm font-semibold text-gray-900 mb-4">Selling Address</h3>
+                  <div className="space-y-3">
+                    <div>
+                      <label className={labelCls}>Street Address</label>
+                      <input value={editForm.selling_address} onChange={e => field({ selling_address: e.target.value })} className={inputCls} />
+                    </div>
+                    <div className="grid grid-cols-3 gap-3">
+                      <div className="col-span-1">
+                        <label className={labelCls}>City</label>
+                        <input value={editForm.selling_city} onChange={e => field({ selling_city: e.target.value })} className={inputCls} />
+                      </div>
+                      <div>
+                        <label className={labelCls}>State</label>
+                        <input value={editForm.selling_state} onChange={e => field({ selling_state: e.target.value })} className={inputCls} />
+                      </div>
+                      <div>
+                        <label className={labelCls}>Zip</label>
+                        <input value={editForm.selling_zip} onChange={e => field({ selling_zip: e.target.value })} className={inputCls} />
                       </div>
                     </div>
                   </div>

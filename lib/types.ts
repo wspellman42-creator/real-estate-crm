@@ -68,6 +68,14 @@ export interface Lead {
   status: LeadStatus
   pipeline_stage?: PipelineStage
   pipeline_type?: 'company' | 'personal'
+  buying_address?: string
+  buying_city?: string
+  buying_state?: string
+  buying_zip?: string
+  selling_address?: string
+  selling_city?: string
+  selling_state?: string
+  selling_zip?: string
   deal_value?: number
   expected_close_date?: string
   assigned_agent_id?: string

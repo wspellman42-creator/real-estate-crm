@@ -1,0 +1,9 @@
+ALTER TABLE leads
+  ADD COLUMN IF NOT EXISTS buying_address TEXT,
+  ADD COLUMN IF NOT EXISTS buying_city TEXT,
+  ADD COLUMN IF NOT EXISTS buying_state TEXT,
+  ADD COLUMN IF NOT EXISTS buying_zip TEXT,
+  ADD COLUMN IF NOT EXISTS selling_address TEXT,
+  ADD COLUMN IF NOT EXISTS selling_city TEXT,
+  ADD COLUMN IF NOT EXISTS selling_state TEXT,
+  ADD COLUMN IF NOT EXISTS selling_zip TEXT;
