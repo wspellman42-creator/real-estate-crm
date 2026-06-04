@@ -11,9 +11,12 @@ export function useCompanyId(): string | null {
 
   useEffect(() => {
     if (cached) return
-    supabase.from('profiles').select('company_id').single().then(({ data }) => {
-      cached = data?.company_id ?? null
-      setCompanyId(cached)
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (!user) return
+      supabase.from('profiles').select('company_id').eq('id', user.id).single().then(({ data }) => {
+        cached = data?.company_id ?? null
+        setCompanyId(cached)
+      })
     })
   }, [])
 
