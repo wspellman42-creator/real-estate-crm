@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { Lead, Tag, LeadActivity, SmartPlan } from '@/lib/types'
-import { getStatusColor, getStageColor, LEAD_STATUSES, LEAD_TYPES, LEAD_SOURCES, PIPELINE_STAGES, formatCurrency, formatDate, timeAgo, getInitials } from '@/lib/utils'
+import { getStatusColor, getStageColor, LEAD_STATUSES, LEAD_TYPES, LEAD_SOURCES, PIPELINE_STAGES, formatCurrency, formatDate, timeAgo, getInitials, NOTE_TYPES, NOTE_TYPE_LABELS, NOTE_TYPE_ICONS, NOTE_TYPE_COLORS, type NoteType } from '@/lib/utils'
 import {
   ArrowLeft, Phone, Mail, MapPin, Edit2, CheckSquare,
   FileText, Zap, Tag as TagIcon, Clock, Plus, X, Check,
@@ -31,6 +31,7 @@ export default function LeadProfile({ lead, agents, smartPlans, allTags, activit
   const [editing, setEditing] = useState(false)
   const [saving, setSaving] = useState(false)
   const [noteText, setNoteText] = useState('')
+  const [noteType, setNoteType] = useState<NoteType>('note')
   const [addingNote, setAddingNote] = useState(false)
   const [taskTitle, setTaskTitle] = useState('')
   const [taskDue, setTaskDue] = useState('')
@@ -47,6 +48,7 @@ export default function LeadProfile({ lead, agents, smartPlans, allTags, activit
     lead_source: lead.lead_source ?? '',
     status: lead.status,
     pipeline_stage: lead.pipeline_stage ?? 'New Lead',
+    pipeline_type: lead.pipeline_type ?? 'personal',
     assigned_agent_id: lead.assigned_agent_id ?? '',
     deal_value: lead.deal_value?.toString() ?? '',
     expected_close_date: lead.expected_close_date ?? '',
@@ -77,10 +79,10 @@ export default function LeadProfile({ lead, agents, smartPlans, allTags, activit
     if (!noteText.trim()) return
     setAddingNote(true)
     const { data: { user } } = await supabase.auth.getUser()
-    await supabase.from('lead_notes').insert({ lead_id: lead.id, content: noteText, author_id: user?.id })
+    await supabase.from('lead_notes').insert({ lead_id: lead.id, content: noteText, author_id: user?.id, note_type: noteType })
     await supabase.from('lead_activity').insert({
       lead_id: lead.id, user_id: user?.id,
-      activity_type: 'note', description: 'Added a note'
+      activity_type: noteType, description: `Logged a ${NOTE_TYPE_LABELS[noteType].toLowerCase()}`
     })
     setNoteText('')
     setAddingNote(false)
@@ -93,7 +95,6 @@ export default function LeadProfile({ lead, agents, smartPlans, allTags, activit
     await supabase.from('tasks').insert({
       lead_id: lead.id, title: taskTitle,
       due_date: taskDue || null, assigned_to_id: user?.id,
-      created_by_id: user?.id
     })
     setTaskTitle('')
     setTaskDue('')
@@ -529,6 +530,13 @@ export default function LeadProfile({ lead, agents, smartPlans, allTags, activit
                       </select>
                     </div>
                     <div>
+                      <label className={labelCls}>Pipeline Type</label>
+                      <select value={editForm.pipeline_type} onChange={e => field({ pipeline_type: e.target.value })} className={inputCls}>
+                        <option value="personal">Personal</option>
+                        <option value="company">Company</option>
+                      </select>
+                    </div>
+                    <div>
                       <label className={labelCls}>Deal Value ($)</label>
                       <input type="number" value={editForm.deal_value} onChange={e => field({ deal_value: e.target.value })} placeholder="0" className={inputCls} />
                     </div>
@@ -564,11 +572,28 @@ export default function LeadProfile({ lead, agents, smartPlans, allTags, activit
               <div className="space-y-4">
                 {/* Note composer */}
                 <div className="bg-gray-50 rounded-xl border border-gray-200 p-4">
-                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">New Note</p>
+                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Log Activity</p>
+                  {/* Type selector */}
+                  <div className="flex gap-2 flex-wrap mb-3">
+                    {NOTE_TYPES.map(type => (
+                      <button
+                        key={type}
+                        onClick={() => setNoteType(type)}
+                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border transition-all ${
+                          noteType === type
+                            ? NOTE_TYPE_COLORS[type] + ' border-current shadow-sm'
+                            : 'bg-white border-gray-200 text-gray-500 hover:border-gray-300'
+                        }`}
+                      >
+                        <span>{NOTE_TYPE_ICONS[type]}</span>
+                        {NOTE_TYPE_LABELS[type]}
+                      </button>
+                    ))}
+                  </div>
                   <textarea
                     value={noteText}
                     onChange={e => setNoteText(e.target.value)}
-                    placeholder="Write a note about this lead…"
+                    placeholder={`Add a note about this ${NOTE_TYPE_LABELS[noteType].toLowerCase()}…`}
                     rows={3}
                     className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none bg-white"
                   />
@@ -576,7 +601,7 @@ export default function LeadProfile({ lead, agents, smartPlans, allTags, activit
                     <button onClick={addNote} disabled={!noteText.trim() || addingNote}
                       className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors font-medium">
                       <Plus size={14} />
-                      {addingNote ? 'Adding…' : 'Add Note'}
+                      {addingNote ? 'Logging…' : `Log ${NOTE_TYPE_LABELS[noteType]}`}
                     </button>
                   </div>
                 </div>
@@ -584,12 +609,15 @@ export default function LeadProfile({ lead, agents, smartPlans, allTags, activit
                 {/* Notes list */}
                 <div className="space-y-3">
                   {lead.notes && lead.notes.length > 0 ? (
-                    lead.notes.map((note, i) => (
+                    lead.notes.map((note, i) => {
+                      const nt = (note.note_type as NoteType | undefined) ?? 'note'
+                      const colorCls = NOTE_TYPE_COLORS[nt] ?? NOTE_TYPE_COLORS.note
+                      return (
                       <div key={note.id} className="group relative">
                         <div className="flex gap-3">
                           <div className="flex flex-col items-center">
-                            <div className="w-7 h-7 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 text-xs font-bold flex-shrink-0">
-                              {note.author?.full_name ? getInitials(note.author.full_name) : '?'}
+                            <div className={`w-7 h-7 rounded-full flex items-center justify-center text-sm flex-shrink-0 ${colorCls}`}>
+                              {NOTE_TYPE_ICONS[nt]}
                             </div>
                             {i < lead.notes.length - 1 && (
                               <div className="w-px flex-1 bg-gray-100 mt-1 min-h-4" />
@@ -597,7 +625,10 @@ export default function LeadProfile({ lead, agents, smartPlans, allTags, activit
                           </div>
                           <div className="flex-1 pb-2">
                             <div className="flex items-center gap-2 mb-1">
-                              <span className="text-xs font-semibold text-gray-700">
+                              <span className={`text-xs font-semibold px-1.5 py-0.5 rounded ${colorCls}`}>
+                                {NOTE_TYPE_LABELS[nt]}
+                              </span>
+                              <span className="text-xs font-medium text-gray-700">
                                 {note.author?.full_name ?? 'Unknown'}
                               </span>
                               <span className="text-xs text-gray-400">{timeAgo(note.created_at)}</span>
@@ -608,7 +639,8 @@ export default function LeadProfile({ lead, agents, smartPlans, allTags, activit
                           </div>
                         </div>
                       </div>
-                    ))
+                      )
+                    })
                   ) : (
                     <div className="text-center py-12">
                       <StickyNote size={32} className="text-gray-200 mx-auto mb-3" />

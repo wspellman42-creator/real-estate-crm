@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Plus, X } from 'lucide-react'
+import { Plus, X, Building2, User } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import { LEAD_TYPES, LEAD_STATUSES, LEAD_SOURCES } from '@/lib/utils'
@@ -20,7 +20,7 @@ export default function AddLeadButton({ agents }: AddLeadButtonProps) {
     first_name: '', last_name: '', email: '', phone: '',
     address: '', city: '', state: '', zip: '',
     lead_type: 'Buyer', lead_source: '', status: 'New',
-    assigned_agent_id: '', deal_value: '',
+    assigned_agent_id: '', deal_value: '', pipeline_type: 'personal',
   })
 
   function update(field: string, value: string) {
@@ -30,7 +30,7 @@ export default function AddLeadButton({ agents }: AddLeadButtonProps) {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setLoading(true)
-    
+
     const { error } = await supabase.from('leads').insert({
       ...form,
       deal_value: form.deal_value ? parseFloat(form.deal_value) : null,
@@ -41,7 +41,7 @@ export default function AddLeadButton({ agents }: AddLeadButtonProps) {
       alert(`Failed to add lead: ${error.message}`)
     } else {
       setOpen(false)
-      setForm({ first_name: '', last_name: '', email: '', phone: '', address: '', city: '', state: '', zip: '', lead_type: 'Buyer', lead_source: '', status: 'New', assigned_agent_id: '', deal_value: '' })
+      setForm({ first_name: '', last_name: '', email: '', phone: '', address: '', city: '', state: '', zip: '', lead_type: 'Buyer', lead_source: '', status: 'New', assigned_agent_id: '', deal_value: '', pipeline_type: 'personal' })
       router.refresh()
     }
     setLoading(false)
@@ -58,8 +58,8 @@ export default function AddLeadButton({ agents }: AddLeadButtonProps) {
       </button>
 
       {open && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl w-full max-w-xl shadow-2xl max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 bg-black/40 flex items-start justify-center z-50 p-4 pt-10 overflow-y-auto">
+          <div className="bg-white rounded-2xl w-full max-w-xl shadow-2xl">
             <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
               <h2 className="text-lg font-semibold text-gray-900">Add New Lead</h2>
               <button onClick={() => setOpen(false)} className="p-1.5 hover:bg-gray-100 rounded-lg transition-colors">
@@ -149,6 +149,46 @@ export default function AddLeadButton({ agents }: AddLeadButtonProps) {
                   <input type="number" value={form.deal_value} onChange={e => update('deal_value', e.target.value)}
                     placeholder="$0"
                     className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                </div>
+              </div>
+
+              {/* Pipeline Assignment */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Pipeline Assignment</label>
+                <div className="grid grid-cols-2 gap-3">
+                  {[
+                    { value: 'company', label: 'Company', icon: Building2, desc: 'Shared with team' },
+                    { value: 'personal', label: 'Personal', icon: User, desc: 'Your pipeline only' },
+                  ].map(({ value, label, icon: Icon, desc }) => (
+                    <button
+                      key={value}
+                      type="button"
+                      onClick={() => update('pipeline_type', value)}
+                      className={`flex items-center gap-3 p-3 rounded-xl border-2 text-left transition-all ${
+                        form.pipeline_type === value
+                          ? value === 'company'
+                            ? 'border-purple-500 bg-purple-50'
+                            : 'border-pink-500 bg-pink-50'
+                          : 'border-gray-200 hover:border-gray-300'
+                      }`}
+                    >
+                      <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${
+                        form.pipeline_type === value
+                          ? value === 'company' ? 'bg-purple-100' : 'bg-pink-100'
+                          : 'bg-gray-100'
+                      }`}>
+                        <Icon size={15} className={
+                          form.pipeline_type === value
+                            ? value === 'company' ? 'text-purple-600' : 'text-pink-600'
+                            : 'text-gray-400'
+                        } />
+                      </div>
+                      <div>
+                        <p className="text-sm font-semibold text-gray-800">{label}</p>
+                        <p className="text-xs text-gray-400">{desc}</p>
+                      </div>
+                    </button>
+                  ))}
                 </div>
               </div>
 

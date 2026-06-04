@@ -102,4 +102,49 @@ export const LEAD_STATUSES: LeadStatus[] = [
 ]
 
 export const LEAD_TYPES = ['Buyer', 'Seller', 'Investor', 'Past Client', 'Sphere'] as const
-export const LEAD_SOURCES = ['Website', 'Referral', 'Zillow', 'Realtor.com', 'Social Media', 'Open House', 'Cold Call', 'Direct Mail', 'Other'] as const
+export const LEAD_SOURCES = [
+  'Facebook Page',
+  'Call In',
+  'Email',
+  'Open House',
+  'Other',
+  'Past Client',
+  'Personal',
+  'Referral',
+  'Veterans United',
+  'Website',
+  'Zillow',
+] as const
+
+export const NOTE_TYPES = ['call', 'text', 'email', 'showing', 'doc', 'note'] as const
+export type NoteType = typeof NOTE_TYPES[number]
+
+export const NOTE_TYPE_LABELS: Record<NoteType, string> = {
+  call: 'Call',
+  text: 'Text',
+  email: 'Email',
+  showing: 'Showing',
+  doc: 'Doc',
+  note: 'Note',
+}
+
+export const NOTE_TYPE_ICONS: Record<NoteType, string> = {
+  call: '📞',
+  text: '💬',
+  email: '✉️',
+  showing: '🏠',
+  doc: '📄',
+  note: '📝',
+}
+
+export const NOTE_TYPE_COLORS: Record<NoteType, string> = {
+  call: 'bg-blue-100 text-blue-700',
+  text: 'bg-green-100 text-green-700',
+  email: 'bg-yellow-100 text-yellow-700',
+  showing: 'bg-purple-100 text-purple-700',
+  doc: 'bg-orange-100 text-orange-700',
+  note: 'bg-gray-100 text-gray-600',
+}
+
+export const PIPELINE_TYPES = ['personal', 'company'] as const
+export type PipelineType = typeof PIPELINE_TYPES[number]

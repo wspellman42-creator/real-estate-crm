@@ -2,32 +2,57 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { 
-  LayoutDashboard, 
-  Users, 
-  TrendingUp, 
-  Zap, 
+import {
+  LayoutDashboard,
+  Users,
+  TrendingUp,
+  Zap,
   Settings,
-  Building2
+  Building2,
+  CheckSquare,
+  Calendar,
+  Home,
+  BarChart2,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 const adminNavItems = [
-  { href: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
-  { href: '/crm', icon: Users, label: 'CRM' },
-  { href: '/sales', icon: TrendingUp, label: 'Sales' },
-  { href: '/automations', icon: Zap, label: 'Automations' },
-  { href: '/settings', icon: Settings, label: 'Settings' },
+  { section: 'Main', items: [
+    { href: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
+  ]},
+  { section: 'CRM', items: [
+    { href: '/crm', icon: Users, label: 'Leads' },
+    { href: '/tasks', icon: CheckSquare, label: 'Tasks' },
+    { href: '/calendar', icon: Calendar, label: 'Calendar' },
+    { href: '/sales', icon: TrendingUp, label: 'Sales Pipeline' },
+  ]},
+  { section: 'Properties', items: [
+    { href: '/listings', icon: Home, label: 'Listings' },
+  ]},
+  { section: 'Analytics', items: [
+    { href: '/reporting', icon: BarChart2, label: 'Reporting' },
+  ]},
+  { section: 'System', items: [
+    { href: '/automations', icon: Zap, label: 'Automations' },
+    { href: '/settings', icon: Settings, label: 'Settings' },
+  ]},
 ]
 
 const agentNavItems = [
-  { href: '/crm', icon: Users, label: 'CRM' },
-  { href: '/sales', icon: TrendingUp, label: 'Sales' },
+  { section: 'CRM', items: [
+    { href: '/crm', icon: Users, label: 'Leads' },
+    { href: '/tasks', icon: CheckSquare, label: 'Tasks' },
+    { href: '/calendar', icon: Calendar, label: 'Calendar' },
+    { href: '/sales', icon: TrendingUp, label: 'Sales Pipeline' },
+  ]},
+  { section: 'Properties', items: [
+    { href: '/listings', icon: Home, label: 'Listings' },
+  ]},
 ]
 
 export default function Sidebar({ role }: { role: string }) {
   const pathname = usePathname()
-  const navItems = role === 'admin' ? adminNavItems : agentNavItems
+  const sections = role === 'admin' ? adminNavItems : agentNavItems
 
   return (
     <div className="w-56 flex-shrink-0 flex flex-col" style={{ backgroundColor: '#1a1f2e' }}>
@@ -45,34 +70,40 @@ export default function Sidebar({ role }: { role: string }) {
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 py-4 space-y-0.5 px-2">
-        {navItems.map(({ href, icon: Icon, label }) => {
-          const isActive = href === '/dashboard' 
-            ? pathname === '/dashboard'
-            : pathname.startsWith(href)
-          
-          return (
-            <Link
-              key={href}
-              href={href}
-              className={cn(
-                'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all',
-                isActive
-                  ? 'bg-blue-600 text-white'
-                  : 'text-gray-400 hover:bg-white/5 hover:text-white'
-              )}
-            >
-              <Icon size={18} />
-              {label}
-            </Link>
-          )
-        })}
+      <nav className="flex-1 py-3 px-2 overflow-y-auto">
+        {sections.map(({ section, items }) => (
+          <div key={section} className="mb-4">
+            <p className="px-3 mb-1 text-xs font-semibold text-gray-500 uppercase tracking-wider">{section}</p>
+            <div className="space-y-0.5">
+              {items.map(({ href, icon: Icon, label }) => {
+                const isActive = href === '/dashboard'
+                  ? pathname === '/dashboard'
+                  : pathname.startsWith(href)
+                return (
+                  <Link
+                    key={href}
+                    href={href}
+                    className={cn(
+                      'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all',
+                      isActive
+                        ? 'bg-blue-600 text-white'
+                        : 'text-gray-400 hover:bg-white/5 hover:text-white'
+                    )}
+                  >
+                    <Icon size={16} />
+                    {label}
+                  </Link>
+                )
+              })}
+            </div>
+          </div>
+        ))}
       </nav>
 
       {/* Bottom */}
       <div className="p-3 border-t border-white/10">
         <div className="px-3 py-2 rounded-lg bg-white/5">
-          <p className="text-xs text-gray-500">Version 1.0.0</p>
+          <p className="text-xs text-gray-500">Version 2.0.0</p>
         </div>
       </div>
     </div>

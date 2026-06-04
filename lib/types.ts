@@ -67,6 +67,7 @@ export interface Lead {
   lead_source?: string
   status: LeadStatus
   pipeline_stage?: PipelineStage
+  pipeline_type?: 'company' | 'personal'
   deal_value?: number
   expected_close_date?: string
   assigned_agent_id?: string
@@ -93,6 +94,21 @@ export interface LeadNote {
   author_id: string
   author?: Profile
   content: string
+  note_type?: string
+  created_at: string
+}
+
+export interface GlobalTask {
+  id: string
+  lead_id?: string
+  lead?: { id: string; first_name: string; last_name: string } | null
+  assigned_to_id?: string
+  assigned_to?: { full_name: string } | null
+  title: string
+  description?: string
+  due_date?: string
+  completed: boolean
+  completed_at?: string
   created_at: string
 }
 
