@@ -117,8 +117,8 @@ export default function TopBar({ profile }: TopBarProps) {
         .limit(8),
     ])
 
-    if (tasks) setNotifTasks(tasks as NotifTask[])
-    if (notes) setNotifNotes(notes as NotifNote[])
+    if (tasks) setNotifTasks(tasks as unknown as NotifTask[])
+    if (notes) setNotifNotes(notes as unknown as NotifNote[])
     setNotifLoaded(true)
   }, [profile?.id, supabase])
 
