@@ -62,6 +62,9 @@ export default function LeadProfile({ lead, agents, smartPlans, allTags, activit
     assigned_agent_id: lead.assigned_agent_id ?? '',
     deal_value: lead.deal_value?.toString() ?? '',
     expected_close_date: lead.expected_close_date ?? '',
+    spouse_name: lead.spouse_name ?? '',
+    spouse_email: lead.spouse_email ?? '',
+    spouse_phone: lead.spouse_phone ?? '',
   })
   const router = useRouter()
   const supabase = createClient()
@@ -83,6 +86,9 @@ export default function LeadProfile({ lead, agents, smartPlans, allTags, activit
       deal_value: editForm.deal_value ? parseFloat(editForm.deal_value) : null,
       assigned_agent_id: editForm.assigned_agent_id || null,
       expected_close_date: editForm.expected_close_date || null,
+      spouse_name: editForm.spouse_name || null,
+      spouse_email: editForm.spouse_email || null,
+      spouse_phone: editForm.spouse_phone || null,
     }).eq('id', lead.id)
     setSaving(false)
     if (!error) {
@@ -95,11 +101,15 @@ export default function LeadProfile({ lead, agents, smartPlans, allTags, activit
     if (!noteText.trim()) return
     setAddingNote(true)
     const { data: { user } } = await supabase.auth.getUser()
+    const now = new Date().toISOString()
     await supabase.from('lead_notes').insert({ lead_id: lead.id, content: noteText, author_id: user?.id, note_type: noteType, company_id: companyId })
-    await supabase.from('lead_activity').insert({
-      lead_id: lead.id, user_id: user?.id,
-      activity_type: noteType, description: `Logged a ${NOTE_TYPE_LABELS[noteType].toLowerCase()}`, company_id: companyId
-    })
+    await Promise.all([
+      supabase.from('lead_activity').insert({
+        lead_id: lead.id, user_id: user?.id,
+        activity_type: noteType, description: `Logged a ${NOTE_TYPE_LABELS[noteType].toLowerCase()}`, company_id: companyId
+      }),
+      supabase.from('leads').update({ last_contacted_at: now }).eq('id', lead.id),
+    ])
     setNoteText('')
     setAddingNote(false)
     router.refresh()
@@ -326,6 +336,41 @@ export default function LeadProfile({ lead, agents, smartPlans, allTags, activit
               )}
             </div>
 
+            {/* Spouse / Co-Buyer */}
+            {(lead.spouse_name || lead.spouse_email || lead.spouse_phone) && (
+              <div className="mt-4 pt-4 border-t border-gray-100">
+                <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2.5">Spouse / Co-Buyer</p>
+                <div className="space-y-2">
+                  {lead.spouse_name && (
+                    <div className="flex items-center gap-2.5 text-sm text-gray-700">
+                      <div className="w-7 h-7 bg-pink-50 rounded-lg flex items-center justify-center flex-shrink-0">
+                        <User size={13} className="text-pink-500" />
+                      </div>
+                      <span className="truncate">{lead.spouse_name}</span>
+                    </div>
+                  )}
+                  {lead.spouse_email && (
+                    <a href={`mailto:${lead.spouse_email}`}
+                      className="flex items-center gap-2.5 text-sm text-gray-600 hover:text-blue-600 transition-colors group">
+                      <div className="w-7 h-7 bg-blue-50 rounded-lg flex items-center justify-center flex-shrink-0 group-hover:bg-blue-100">
+                        <Mail size={13} className="text-blue-500" />
+                      </div>
+                      <span className="truncate">{lead.spouse_email}</span>
+                    </a>
+                  )}
+                  {lead.spouse_phone && (
+                    <a href={`tel:${lead.spouse_phone}`}
+                      className="flex items-center gap-2.5 text-sm text-gray-600 hover:text-blue-600 transition-colors group">
+                      <div className="w-7 h-7 bg-green-50 rounded-lg flex items-center justify-center flex-shrink-0 group-hover:bg-green-100">
+                        <Phone size={13} className="text-green-500" />
+                      </div>
+                      <span>{lead.spouse_phone}</span>
+                    </a>
+                  )}
+                </div>
+              </div>
+            )}
+
             <div className="mt-4 pt-4 border-t border-gray-100 space-y-2">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-1.5 text-xs text-gray-500">
@@ -525,6 +570,24 @@ export default function LeadProfile({ lead, agents, smartPlans, allTags, activit
                     <div>
                       <label className={labelCls}>Phone</label>
                       <input value={editForm.phone} onChange={e => field({ phone: e.target.value })} className={inputCls} />
+                    </div>
+                    <div className="col-span-2 pt-2">
+                      <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3 flex items-center gap-1.5">
+                        <User size={11} />
+                        Spouse / Co-Buyer
+                      </p>
+                    </div>
+                    <div>
+                      <label className={labelCls}>Spouse Name</label>
+                      <input value={editForm.spouse_name} onChange={e => field({ spouse_name: e.target.value })} placeholder="Full name" className={inputCls} />
+                    </div>
+                    <div>
+                      <label className={labelCls}>Spouse Phone</label>
+                      <input value={editForm.spouse_phone} onChange={e => field({ spouse_phone: e.target.value })} placeholder="Phone number" className={inputCls} />
+                    </div>
+                    <div className="col-span-2">
+                      <label className={labelCls}>Spouse Email</label>
+                      <input type="email" value={editForm.spouse_email} onChange={e => field({ spouse_email: e.target.value })} placeholder="Email address" className={inputCls} />
                     </div>
                   </div>
                 </div>

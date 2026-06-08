@@ -59,6 +59,9 @@ export interface Lead {
   last_name: string
   email?: string
   phone?: string
+  spouse_name?: string
+  spouse_email?: string
+  spouse_phone?: string
   address?: string
   city?: string
   state?: string

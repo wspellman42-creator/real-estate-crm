@@ -47,12 +47,14 @@ export default function TopBar({ profile }: TopBarProps) {
   const [notifLoaded, setNotifLoaded] = useState(false)
 
   const router = useRouter()
-  const supabase = createClient()
+  // Stable Supabase client — created once on mount, never re-created on re-render
+  const supabase = useRef(createClient()).current
   const searchRef = useRef<HTMLDivElement>(null)
   const notifRef = useRef<HTMLDivElement>(null)
   const menuRef = useRef<HTMLDivElement>(null)
   const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
+  // Close dropdowns on outside click
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
       if (searchRef.current && !searchRef.current.contains(e.target as Node)) {
@@ -84,17 +86,17 @@ export default function TopBar({ profile }: TopBarProps) {
         .select('id, first_name, last_name, email, phone, status')
         .or(`first_name.ilike.%${q}%,last_name.ilike.%${q}%,email.ilike.%${q}%,phone.ilike.%${q}%`)
         .limit(6)
-      if (data) {
-        setSearchResults(data as LeadResult[])
-        setSearchOpen(true)
-      }
+      setSearchResults((data as LeadResult[]) ?? [])
+      setSearchOpen(true)
     }, 300)
+    return () => {
+      if (searchTimer.current) clearTimeout(searchTimer.current)
+    }
   }, [searchQuery, supabase])
 
+  // Load notifications: all my open tasks + recent notes (48h)
   const loadNotifications = useCallback(async () => {
     if (!profile?.id) return
-    const todayEnd = new Date()
-    todayEnd.setHours(23, 59, 59, 999)
     const twoDaysAgo = new Date()
     twoDaysAgo.setDate(twoDaysAgo.getDate() - 2)
 
@@ -104,8 +106,7 @@ export default function TopBar({ profile }: TopBarProps) {
         .select('id, title, due_date, lead:leads(id, first_name, last_name)')
         .eq('assigned_to_id', profile.id)
         .eq('completed', false)
-        .lte('due_date', todayEnd.toISOString())
-        .order('due_date', { ascending: true })
+        .order('due_date', { ascending: true, nullsFirst: false })
         .limit(10),
       supabase
         .from('lead_notes')
@@ -135,6 +136,16 @@ export default function TopBar({ profile }: TopBarProps) {
     setSearchResults([])
     setSearchOpen(false)
     router.push(`/crm/${leadId}`)
+  }
+
+  function taskDueLabel(dueDate: string | null): { text: string; urgent: boolean } {
+    if (!dueDate) return { text: 'No due date', urgent: false }
+    const due = new Date(dueDate)
+    const now = new Date()
+    const todayEnd = new Date(); todayEnd.setHours(23, 59, 59, 999)
+    if (due < now) return { text: 'Overdue', urgent: true }
+    if (due <= todayEnd) return { text: 'Due today', urgent: true }
+    return { text: due.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }), urgent: false }
   }
 
   const totalNotifs = notifTasks.length + notifNotes.length
@@ -197,7 +208,7 @@ export default function TopBar({ profile }: TopBarProps) {
         {/* Notifications */}
         <div ref={notifRef} className="relative">
           <button
-            onClick={() => setShowNotifs(v => !v)}
+            onClick={() => { setShowNotifs(v => !v); if (!notifLoaded) loadNotifications() }}
             className="w-9 h-9 rounded-lg flex items-center justify-center text-gray-500 hover:bg-gray-100 hover:text-gray-700 transition-colors relative"
           >
             <Bell size={18} />
@@ -218,19 +229,19 @@ export default function TopBar({ profile }: TopBarProps) {
               </div>
 
               <div className="overflow-y-auto flex-1">
-                {/* Tasks due */}
+                {/* Open tasks */}
                 {notifTasks.length > 0 && (
                   <div>
                     <div className="px-4 py-2 bg-gray-50 border-b border-gray-100 flex items-center gap-1.5">
                       <CheckSquare size={11} className="text-gray-400" />
-                      <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Tasks Due</p>
+                      <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">My Open Tasks</p>
                     </div>
                     {notifTasks.map(task => {
-                      const isOverdue = task.due_date && new Date(task.due_date) < new Date()
+                      const { text: dueText, urgent } = taskDueLabel(task.due_date)
                       return (
                         <div key={task.id} className="px-4 py-3 border-b border-gray-50 hover:bg-gray-50">
                           <div className="flex items-start gap-2">
-                            <AlertCircle size={14} className={`mt-0.5 flex-shrink-0 ${isOverdue ? 'text-red-400' : 'text-blue-400'}`} />
+                            <AlertCircle size={14} className={`mt-0.5 flex-shrink-0 ${urgent ? 'text-red-400' : 'text-blue-400'}`} />
                             <div className="flex-1 min-w-0">
                               <p className="text-sm text-gray-800 font-medium leading-snug">{task.title}</p>
                               {task.lead && (
@@ -239,12 +250,9 @@ export default function TopBar({ profile }: TopBarProps) {
                                   {task.lead.first_name} {task.lead.last_name}
                                 </Link>
                               )}
-                              {task.due_date && (
-                                <p className={`text-xs mt-0.5 ${isOverdue ? 'text-red-500 font-medium' : 'text-gray-400'}`}>
-                                  {isOverdue ? 'Overdue · ' : ''}
-                                  {new Date(task.due_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                                </p>
-                              )}
+                              <p className={`text-xs mt-0.5 ${urgent ? 'text-red-500 font-medium' : 'text-gray-400'}`}>
+                                {dueText}
+                              </p>
                             </div>
                           </div>
                         </div>
@@ -288,7 +296,7 @@ export default function TopBar({ profile }: TopBarProps) {
                   <div className="py-10 text-center">
                     <Bell size={24} className="text-gray-200 mx-auto mb-2" />
                     <p className="text-sm font-medium text-gray-400">All caught up!</p>
-                    <p className="text-xs text-gray-300 mt-0.5">No pending tasks or recent notes</p>
+                    <p className="text-xs text-gray-300 mt-0.5">No open tasks or recent notes</p>
                   </div>
                 )}
               </div>
