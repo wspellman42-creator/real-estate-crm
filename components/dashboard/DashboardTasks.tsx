@@ -30,7 +30,6 @@ function sevenDaysOut() {
 }
 
 function categorizeTasks(tasks: GlobalTask[]) {
-  const now = new Date()
   const start = todayStart()
   const end = todayEnd()
   const seven = sevenDaysOut()

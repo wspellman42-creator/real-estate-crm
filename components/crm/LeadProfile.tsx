@@ -15,7 +15,7 @@ import { useCompanyId } from '@/hooks/useCompanyId'
 
 interface LeadProfileProps {
   lead: Lead & {
-    notes: Array<{ id: string; content: string; created_at: string; author?: { full_name: string } }>
+    notes: Array<{ id: string; content: string; note_type?: string; created_at: string; author?: { full_name: string } }>
     tasks: Array<{ id: string; title: string; completed: boolean; due_date?: string; assigned_to?: { full_name: string } }>
     active_smart_plans: Array<{ id: string; status: string; current_step?: number; smart_plan: SmartPlan }>
   }

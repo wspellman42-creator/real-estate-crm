@@ -16,7 +16,6 @@ export default async function CalendarPage() {
     supabase
       .from('leads')
       .select('id, first_name, last_name')
-      .eq('assigned_agent_id', user?.id ?? '')
       .order('last_name', { ascending: true }),
   ])
 
