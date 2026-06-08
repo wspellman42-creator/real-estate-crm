@@ -116,19 +116,24 @@ export default function CalendarView({ initialTasks, leads }: Props) {
 
   async function addTask(e: React.FormEvent) {
     e.preventDefault()
-    if (!newTitle.trim() || !selectedDay) return
+    if (!newTitle.trim() || !selectedDay || !companyId) return
     setAdding(true)
     const { data: { user } } = await supabase.auth.getUser()
     const dueDate = new Date(year, month, selectedDay)
     const [h, m] = newTime.split(':').map(Number)
     dueDate.setHours(h, m, 0, 0)
-    await supabase.from('tasks').insert({
-      title: newTitle,
-      due_date: dueDate.toISOString(),
-      lead_id: newLeadId || null,
-      assigned_to_id: user?.id,
-      company_id: companyId,
-    })
+    const { data: newTask } = await supabase
+      .from('tasks')
+      .insert({
+        title: newTitle,
+        due_date: dueDate.toISOString(),
+        lead_id: newLeadId || null,
+        assigned_to_id: user?.id,
+        company_id: companyId,
+      })
+      .select('*, lead:leads(id, first_name, last_name)')
+      .single()
+    if (newTask) setTasks(prev => [...prev, newTask as GlobalTask])
     setNewTitle('')
     setNewTime('09:00')
     setNewLeadId('')

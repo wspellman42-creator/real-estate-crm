@@ -164,16 +164,21 @@ export default function TasksView({ initialTasks, leads }: Props) {
 
   async function addTask(e: React.FormEvent) {
     e.preventDefault()
-    if (!newTitle.trim()) return
+    if (!newTitle.trim() || !companyId) return
     setAdding(true)
     const { data: { user } } = await supabase.auth.getUser()
-    await supabase.from('tasks').insert({
-      title: newTitle,
-      due_date: newDue || null,
-      lead_id: newLeadId || null,
-      assigned_to_id: user?.id,
-      company_id: companyId,
-    })
+    const { data: newTask } = await supabase
+      .from('tasks')
+      .insert({
+        title: newTitle,
+        due_date: newDue || null,
+        lead_id: newLeadId || null,
+        assigned_to_id: user?.id,
+        company_id: companyId,
+      })
+      .select('*, lead:leads(id, first_name, last_name)')
+      .single()
+    if (newTask) setTasks(prev => [...prev, newTask as GlobalTask])
     setNewTitle('')
     setNewDue('')
     setNewLeadId('')
@@ -244,7 +249,7 @@ export default function TasksView({ initialTasks, leads }: Props) {
                 className="px-4 py-2 border border-gray-300 text-gray-600 rounded-lg text-sm hover:bg-gray-50">
                 Cancel
               </button>
-              <button type="submit" disabled={adding || !newTitle.trim()}
+              <button type="submit" disabled={adding || !newTitle.trim() || !companyId}
                 className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 disabled:opacity-50">
                 {adding ? 'Adding…' : 'Add Task'}
               </button>
