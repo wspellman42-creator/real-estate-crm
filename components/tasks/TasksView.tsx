@@ -1,10 +1,10 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { GlobalTask } from '@/lib/types'
-import { Plus, Check, AlertCircle, Clock, CheckCircle2, CalendarDays, X } from 'lucide-react'
+import { Plus, Check, AlertCircle, Clock, CheckCircle2, CalendarDays, X, Search } from 'lucide-react'
 import { useCompanyId } from '@/hooks/useCompanyId'
 
 interface Props {
@@ -109,10 +109,27 @@ export default function TasksView({ initialTasks, leads }: Props) {
   const [newTitle, setNewTitle] = useState('')
   const [newDue, setNewDue] = useState('')
   const [newLeadId, setNewLeadId] = useState('')
+  const [leadSearch, setLeadSearch] = useState('')
+  const [leadDropdownOpen, setLeadDropdownOpen] = useState(false)
   const [adding, setAdding] = useState(false)
   const [showForm, setShowForm] = useState(false)
+  const leadSearchRef = useRef<HTMLDivElement>(null)
   const supabase = createClient()
   const companyId = useCompanyId()
+
+  const filteredLeads = leads.filter(l =>
+    `${l.first_name} ${l.last_name}`.toLowerCase().includes(leadSearch.toLowerCase())
+  )
+
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (leadSearchRef.current && !leadSearchRef.current.contains(e.target as Node)) {
+        setLeadDropdownOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
 
   const fetchTasks = useCallback(async () => {
     const { data } = await supabase
@@ -160,6 +177,7 @@ export default function TasksView({ initialTasks, leads }: Props) {
     setNewTitle('')
     setNewDue('')
     setNewLeadId('')
+    setLeadSearch('')
     setShowForm(false)
     setAdding(false)
   }
@@ -188,16 +206,44 @@ export default function TasksView({ initialTasks, leads }: Props) {
             />
           </div>
           <div className="flex gap-3 items-center">
-            <select
-              value={newLeadId}
-              onChange={e => setNewLeadId(e.target.value)}
-              className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-600"
-            >
-              <option value="">No lead (standalone task)</option>
-              {leads.map(l => (
-                <option key={l.id} value={l.id}>{l.first_name} {l.last_name}</option>
-              ))}
-            </select>
+            <div ref={leadSearchRef} className="flex-1 relative">
+              <div className="relative">
+                <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+                <input
+                  type="text"
+                  value={leadSearch}
+                  onChange={e => { setLeadSearch(e.target.value); setLeadDropdownOpen(true); if (!e.target.value) setNewLeadId('') }}
+                  onFocus={() => setLeadDropdownOpen(true)}
+                  placeholder="Search leads…"
+                  className="w-full border border-gray-300 rounded-lg pl-8 pr-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-700"
+                />
+                {newLeadId && (
+                  <button type="button" onClick={() => { setNewLeadId(''); setLeadSearch('') }}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                    <X size={13} />
+                  </button>
+                )}
+              </div>
+              {leadDropdownOpen && (
+                <div className="absolute z-20 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg max-h-48 overflow-y-auto">
+                  <button type="button" onMouseDown={() => { setNewLeadId(''); setLeadSearch(''); setLeadDropdownOpen(false) }}
+                    className="w-full text-left px-3 py-2 text-sm text-gray-400 hover:bg-gray-50">
+                    No lead (standalone task)
+                  </button>
+                  {filteredLeads.length === 0 && leadSearch ? (
+                    <p className="px-3 py-2 text-sm text-gray-400">No leads found</p>
+                  ) : (
+                    filteredLeads.map(l => (
+                      <button key={l.id} type="button"
+                        onMouseDown={() => { setNewLeadId(l.id); setLeadSearch(`${l.first_name} ${l.last_name}`); setLeadDropdownOpen(false) }}
+                        className={`w-full text-left px-3 py-2 text-sm hover:bg-gray-50 ${newLeadId === l.id ? 'bg-blue-50 text-blue-700 font-medium' : 'text-gray-700'}`}>
+                        {l.first_name} {l.last_name}
+                      </button>
+                    ))
+                  )}
+                </div>
+              )}
+            </div>
             <div className="flex gap-2">
               <button type="button" onClick={() => setShowForm(false)}
                 className="px-4 py-2 border border-gray-300 text-gray-600 rounded-lg text-sm hover:bg-gray-50">
