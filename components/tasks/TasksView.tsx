@@ -213,7 +213,6 @@ export default function TasksView({ initialTasks, leads }: Props) {
                   type="text"
                   value={leadSearch}
                   onChange={e => { setLeadSearch(e.target.value); setLeadDropdownOpen(true); if (!e.target.value) setNewLeadId('') }}
-                  onFocus={() => setLeadDropdownOpen(true)}
                   placeholder="Search leads…"
                   className="w-full border border-gray-300 rounded-lg pl-8 pr-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-700"
                 />
@@ -224,13 +223,9 @@ export default function TasksView({ initialTasks, leads }: Props) {
                   </button>
                 )}
               </div>
-              {leadDropdownOpen && (
+              {leadDropdownOpen && leadSearch.length > 0 && (
                 <div className="absolute z-20 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg max-h-48 overflow-y-auto">
-                  <button type="button" onMouseDown={() => { setNewLeadId(''); setLeadSearch(''); setLeadDropdownOpen(false) }}
-                    className="w-full text-left px-3 py-2 text-sm text-gray-400 hover:bg-gray-50">
-                    No lead (standalone task)
-                  </button>
-                  {filteredLeads.length === 0 && leadSearch ? (
+                  {filteredLeads.length === 0 ? (
                     <p className="px-3 py-2 text-sm text-gray-400">No leads found</p>
                   ) : (
                     filteredLeads.map(l => (
