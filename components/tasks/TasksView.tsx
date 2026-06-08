@@ -171,7 +171,7 @@ export default function TasksView({ initialTasks, leads }: Props) {
       .from('tasks')
       .insert({
         title: newTitle,
-        due_date: newDue || null,
+        due_date: newDue ? new Date(newDue).toISOString() : null,
         lead_id: newLeadId || null,
         assigned_to_id: user?.id,
         company_id: companyId,
