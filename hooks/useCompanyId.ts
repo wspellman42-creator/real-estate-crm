@@ -1,13 +1,14 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 
 const cache = new Map<string, string>()
 
 export function useCompanyId(): string | null {
   const [companyId, setCompanyId] = useState<string | null>(null)
-  const supabase = createClient()
+  // Stable reference — created once on mount, never recreated on re-render
+  const supabase = useRef(createClient()).current
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {

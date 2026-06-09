@@ -9,20 +9,25 @@ import { useCompanyId } from '@/hooks/useCompanyId'
 
 interface AddLeadButtonProps {
   agents: { id: string; full_name: string }[]
+  currentUserId?: string
+  isAgent?: boolean
 }
 
-export default function AddLeadButton({ agents }: AddLeadButtonProps) {
+export default function AddLeadButton({ agents, currentUserId, isAgent }: AddLeadButtonProps) {
   const [open, setOpen] = useState(false)
   const [loading, setLoading] = useState(false)
   const router = useRouter()
   const supabase = createClient()
   const companyId = useCompanyId()
 
+  // Agents are always self-assigned; admins can assign to anyone
+  const defaultAgentId = isAgent && currentUserId ? currentUserId : ''
+
   const [form, setForm] = useState({
     first_name: '', last_name: '', email: '', phone: '',
     address: '', city: '', state: '', zip: '',
     lead_type: 'Buyer', lead_source: '', status: 'New',
-    assigned_agent_id: '', deal_value: '', pipeline_type: 'personal',
+    assigned_agent_id: defaultAgentId, deal_value: '', pipeline_type: 'personal',
   })
 
   function update(field: string, value: string) {
@@ -45,7 +50,7 @@ export default function AddLeadButton({ agents }: AddLeadButtonProps) {
       alert(`Failed to add lead: ${error.message}`)
     } else {
       setOpen(false)
-      setForm({ first_name: '', last_name: '', email: '', phone: '', address: '', city: '', state: '', zip: '', lead_type: 'Buyer', lead_source: '', status: 'New', assigned_agent_id: '', deal_value: '', pipeline_type: 'personal' })
+      setForm({ first_name: '', last_name: '', email: '', phone: '', address: '', city: '', state: '', zip: '', lead_type: 'Buyer', lead_source: '', status: 'New', assigned_agent_id: defaultAgentId, deal_value: '', pipeline_type: 'personal' })
       router.refresh()
     }
     setLoading(false)
@@ -196,14 +201,21 @@ export default function AddLeadButton({ agents }: AddLeadButtonProps) {
                 </div>
               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">Assigned Agent</label>
-                <select value={form.assigned_agent_id} onChange={e => update('assigned_agent_id', e.target.value)}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
-                  <option value="">Unassigned</option>
-                  {agents.map(a => <option key={a.id} value={a.id}>{a.full_name}</option>)}
-                </select>
-              </div>
+              {isAgent ? (
+                <div className="flex items-center gap-2 px-3 py-2 bg-blue-50 border border-blue-100 rounded-lg">
+                  <User size={14} className="text-blue-500 flex-shrink-0" />
+                  <p className="text-sm text-blue-700 font-medium">Assigned to you</p>
+                </div>
+              ) : (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1.5">Assigned Agent</label>
+                  <select value={form.assigned_agent_id} onChange={e => update('assigned_agent_id', e.target.value)}
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <option value="">Unassigned</option>
+                    {agents.map(a => <option key={a.id} value={a.id}>{a.full_name}</option>)}
+                  </select>
+                </div>
+              )}
 
               <div className="flex gap-3 pt-2">
                 <button type="button" onClick={() => setOpen(false)}

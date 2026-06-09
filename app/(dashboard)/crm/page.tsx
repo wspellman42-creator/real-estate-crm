@@ -82,7 +82,7 @@ export default async function CRMPage({
         </div>
         <div className="flex items-center gap-2">
           <ImportLeadsButton agents={agents ?? []} />
-          <AddLeadButton agents={agents ?? []} />
+          <AddLeadButton agents={agents ?? []} currentUserId={user?.id} isAgent={isAgent} />
         </div>
       </div>
 
